@@ -1,4 +1,5 @@
 import { Given, When, Then } from "@cucumber/cucumber";
+import registerPage from "../pageobjects/register.page"
 
 Given(/^I am on the page \"([^\"]*)\"$/,async function (appurl) {
     await browser.url(appurl);
@@ -6,16 +7,12 @@ Given(/^I am on the page \"([^\"]*)\"$/,async function (appurl) {
 });
 
 Then(/^I validate the page header \"([^\"]*)\"$/,async function (headertext) {
-    const header = await $("//h1");
-    expect(header).toHaveText(headertext);
+    expect(registerPage.header).toHaveText(headertext);
 });
 
 When(/^I enter firstname (.+) and lastname (.+)$/,async function (fname, lname) {
-    const fname_input = await $("[name=firstname]");
-    const lname_input = await $("[name=lastname]");
-
-    await (fname_input).setValue(fname);
-    await (lname_input).setValue(lname);
+    await (registerPage.fname).setValue(fname);
+    await (registerPage.lname).setValue(lname);
 
 });
 
@@ -25,50 +22,18 @@ Then(/^I select gender (.+) years (.+) favorite chai (.+) and reason (.+)$/,asyn
     const favchai_checkbox = await $$("[name*=Tea]");
     const reason_checkbox = await $$("[name=tool]");
 
-    for (let i = 0; i < gender_radio.length; i++) {
-        const element = await (gender_radio[i]).getAttribute("value");
-        if (element === gender) {
-            await (gender_radio[i]).click();
-            break;
-        }
-}
-
-for (let i = 0; i < experience_radio.length; i++) {
-    const element = await (experience_radio[i]).getAttribute("value");
-    if (element === yrs) {
-        await (experience_radio[i]).click();
-        break;
-    }
-}
-
-for (let i = 0; i < favchai_checkbox.length; i++) {
-    const element = await (favchai_checkbox[i]).getAttribute("value");
-    if (element === favchai) {
-        await (favchai_checkbox[i]).click();
-        break;
-    }
-}
-
-for (let i = 0; i < reason_checkbox.length; i++) {
-    const element = await (reason_checkbox[i]).getAttribute("value");
-    if (element === reason) {
-        await (reason_checkbox[i]).click();
-        break;
-    }
-}
+    registerPage.selectDropdown(await registerPage.gender_radio, gender);
+    registerPage.selectDropdown(await registerPage.experience_radio, yrs);
+    registerPage.selectDropdown(await registerPage.favchai_checkbox, favchai);
+    registerPage.selectDropdown(await registerPage.reason_checkbox, reason);
 
 });
 
-Then(/^I select continent (.+) and commands (.+)$/,async function (continent, command) {
-    const continent_dropdown = await $("#continents");
-    const selCommands_multiselect = await $("#selenium_commands");
-
-    await continent_dropdown.selectByVisibleText(continent);
-    await selCommands_multiselect.selectByVisibleText(command);
-    await browser.pause(5000);
+When(/^I select continent (.+) and commands (.+)$/,async function (continent, command) {
+    await (await registerPage.continent_dropdown).selectByVisibleText(continent);
+    await (await registerPage.selCommands_multiselect).selectByVisibleText(command);
 });
 
 When(/^I click on submit button$/,async function () {
-    const submit_btn = await $("#submit");
-    await submit_btn.click();
+    await (await registerPage.submit_btn).click();
 });
