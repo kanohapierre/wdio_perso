@@ -1,5 +1,5 @@
 import { Given, When, Then } from "@cucumber/cucumber";
-import registerPage from "../pageobjects/register.page"
+import registerPage from "../../src/pages/register.page"
 
 Given(/^I am on the page \"([^\"]*)\"$/, async function (appurl) {
     await browser.url(appurl);
