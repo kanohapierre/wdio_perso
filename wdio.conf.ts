@@ -1,9 +1,28 @@
+import { DOWNLOAD_FOLDER_PATH } from './src/constants/pathconst';
+import { deleteDirectory } from './src/utils/fileutils';
+
+const Google = "https://www.google.co.in/"
+const Wiki = "https://www.wikipedia.org/"
+
+let appbaseURL:string;
+
+if(process.env.ENV == 'DEV') {appbaseURL =  Google}
+else if (process.env.ENV == 'QA') { appbaseURL = Wiki}
+else  {
+    appbaseURL= Google;
+    // console.log("Please pass correct ENV variable:: DEV | QA")
+    // process.exit()
+}
+
 export const config: WebdriverIO.Config = {
     //
     // ====================
     // Runner Configuration
     // ====================
     //
+    // WebdriverIO allows it to run your tests in arbitrary locations (e.g. locally or
+    // on a remote machine).
+    runner: 'local',
     //
     // ==================
     // Specify Test Files
@@ -25,8 +44,11 @@ export const config: WebdriverIO.Config = {
     ],
     // Patterns to exclude.
     exclude: [
-        // 'path/to/excluded/files'
     ],
+    suites: {
+        smoke: ['./test/features/smoke/*.feature'],
+        regression: ['./test/features/regression/*.feature']
+    },
     //
     // ============
     // Capabilities
@@ -49,20 +71,18 @@ export const config: WebdriverIO.Config = {
     // Sauce Labs platform configurator - a great tool to configure your capabilities:
     // https://docs.saucelabs.com/reference/platforms-configurator
     //
-    capabilities: [{
-    
-        // maxInstances can get overwritten per capability. So if you have an in-house Selenium
-        // grid with only 5 firefox instances available you can make sure that not more than
-        // 5 instances get started at a time.
-        maxInstances: 5,
-        //
-        browserName: 'chrome',
-        acceptInsecureCerts: true
-        // If outputDir is provided WebdriverIO can capture driver session logs
-        // it is possible to configure which logTypes to include/exclude.
-        // excludeDriverLogs: ['*'], // pass '*' to exclude all driver session logs
-        // excludeDriverLogs: ['bugreport', 'server'],
-    }],
+    capabilities: [
+        {
+            maxInstances: 1,
+            browserName: 'chrome',
+            acceptInsecureCerts: true,
+            "goog:chromeOptions" : {
+                "prefs" : {
+                    "download.default_directory": DOWNLOAD_FOLDER_PATH
+                }
+            }
+        }
+    ],
     //
     // ===================
     // Test Configurations
@@ -70,12 +90,12 @@ export const config: WebdriverIO.Config = {
     // Define all options that are relevant for the WebdriverIO instance here
     //
     // Level of logging verbosity: trace | debug | info | warn | error | silent
-    logLevel: 'info',
+    logLevel: 'error',
     //
     // Set specific log levels per logger
     // loggers:
     // - webdriver, webdriverio
-    // - @wdio/browserstack-service, @wdio/devtools-service, @wdio/sauce-service
+    // - @wdio/applitools-service, @wdio/browserstack-service, @wdio/devtools-service, @wdio/sauce-service
     // - @wdio/mocha-framework, @wdio/jasmine-framework
     // - @wdio/local-runner
     // - @wdio/sumologic-reporter
@@ -83,7 +103,7 @@ export const config: WebdriverIO.Config = {
     // Level of logging verbosity: trace | debug | info | warn | error | silent
     // logLevels: {
     //     webdriver: 'info',
-    //     '@wdio/appium-service': 'info'
+    //     '@wdio/applitools-service': 'info'
     // },
     //
     // If you only want to run your tests until a specific amount of tests have failed use
@@ -94,10 +114,10 @@ export const config: WebdriverIO.Config = {
     // with `/`, the base url gets prepended, not including the path portion of your baseUrl.
     // If your `url` parameter starts without a scheme or `/` (like `some/path`), the base url
     // gets prepended directly.
-    baseUrl: 'http://localhost',
+    baseUrl: appbaseURL,
     //
     // Default timeout for all waitFor* commands.
-    waitforTimeout: 10000,
+    waitforTimeout: 3000,
     //
     // Default timeout in milliseconds for request
     // if browser driver or grid doesn't send response
@@ -121,7 +141,7 @@ export const config: WebdriverIO.Config = {
     framework: 'cucumber',
     //
     // The number of times to retry the entire specfile when it fails as a whole
-    // specFileRetries: 1,
+    specFileRetries: 1,
     //
     // Delay in seconds between the spec file retry attempts
     // specFileRetriesDelay: 0,
@@ -132,7 +152,18 @@ export const config: WebdriverIO.Config = {
     // Test reporter for stdout.
     // The only one supported by default is 'dot'
     // see also: https://webdriver.io/docs/dot-reporter
-    reporters: ['spec',['allure', {outputDir: 'allure-results'}]],
+    reporters: [
+        'spec',
+        [
+            'allure', 
+            {
+                outputDir: 'allure-results',
+                disableWebdriverStepsReporting: true,
+                disableWebdriverScreenshotsReporting: false,
+                useCucumberStepReporter: true
+            }
+        ]
+    ],
 
 
     //
@@ -143,7 +174,7 @@ export const config: WebdriverIO.Config = {
         // <boolean> show full backtrace for errors
         backtrace: false,
         // <string[]> ("extension:module") require files with the given EXTENSION after requiring MODULE (repeatable)
-        requireModule: [],
+        requireModule: ["tsconfig-paths/register"],
         // <boolean> invoke formatters without executing steps
         dryRun: false,
         // <boolean> abort the run on first failure
@@ -199,8 +230,9 @@ export const config: WebdriverIO.Config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      * @param {Array.<String>} specs List of spec file paths that are to be run
      */
-    // beforeSession: function (config, capabilities, specs) {
-    // },
+    beforeSession: function (config, capabilities, specs) {
+        deleteDirectory('allure-results')
+    },
     /**
      * Gets executed before test execution begins. At this point you can access to all global
      * variables like `browser`. It is the perfect place to define custom commands.
@@ -251,8 +283,11 @@ export const config: WebdriverIO.Config = {
      * @param {string}             result.error    error stack if scenario failed
      * @param {number}             result.duration duration of scenario in milliseconds
      */
-    // afterStep: function (step, scenario, result) {
-    // },
+    afterStep: function (step, scenario, result) {
+        if(!result.passed) {
+            browser.takeScreenshot()
+        }
+    },
     /**
      *
      * Runs before a Cucumber Scenario.

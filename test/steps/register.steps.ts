@@ -1,34 +1,32 @@
-import { Given, When, Then } from "@cucumber/cucumber";
-import registerPage from "../../src/pages/register.page"
+import { Given, When, Then } from '@cucumber/cucumber'
+import chaiPage from 'src/pages/register.page'
 
-Given(/^I am on the page \"([^\"]*)\"$/, async function (appurl) {
-    await browser.url(appurl);
-    await browser.maximizeWindow();
+Given(/^I am on practice page \"([^\"]*)\"$/, async (appurl: string) => {
+    await browser.maximizeWindow()
+    await browser.url(appurl)
 });
 
-Then(/^I validate the page header \"([^\"]*)\"$/, async function (headertext) {
-    expect(registerPage.getHeader()).toHaveText(headertext);
+Then(/^I validat page header \"([^\"]*)\"$/, async (header: string) => {
+    await expect(chaiPage.getHeader()).toHaveText(header)
 });
 
-When(/^I enter firstname (.+) and lastname (.+)$/, async function (fname, lname) {
-    await registerPage.enterFirstName(fname)
-    await registerPage.enterLastName(lname)
-
+When(/^I enter firstname (.+) and lastname (.+)$/, async (fname: string, lname: string) => {
+    await chaiPage.enterFirstName(fname)
+    await chaiPage.enterLastName(lname)
 });
 
-Then(/^I select gender (.+) years (.+) favorite chai (.+) and reason (.+)$/, async function (gender: string, yrs: string, favchai: string, reason: string) {
-    await registerPage.selectGender(gender);
-    await registerPage.selectExperience(yrs);
-    await registerPage.selectFavourite(favchai);
-    await registerPage.selectReason(reason);
-
+When(/^I select gender (.+) years (.+) favorite chai (.+) and reason (.+)$/, async (gender: string, yrs: string, favchai: string, reason: string) => {
+    await chaiPage.selectGender(gender)
+    await chaiPage.selectExperience(yrs)
+    await chaiPage.selectFavChai(favchai)
+    await chaiPage.selectReason(reason)
 });
 
-When(/^I select continent (.+) and commands (.+)$/, async function (continent, command) {
-    await registerPage.selectContinent(continent);
-    await registerPage.selectSeleniumCommand(command);
+When(/^I select continent (.+) and commands (.+)$/, async (continent: string, command: string) => {
+    await chaiPage.selectContinent(continent)
+    await chaiPage.selectSeleniumCommand(command)
 });
 
-When(/^I click on submit button$/, async function () {
-    await registerPage.clickOnSubmitBtn();
+When(/^I click on submit button$/, async () => {
+    await chaiPage.clickOnSubmitBtn()
 });
